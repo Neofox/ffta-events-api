@@ -6,13 +6,13 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class Geocoding
 {
-    const API_TOKEN = 'e97abf966fe53e9a98ca2bef6a348546';
-
     private HttpClientInterface $client;
+    private string $api_token;
 
-    public function __construct(HttpClientInterface $client)
+    public function __construct(string $api_token ,HttpClientInterface $client)
     {
         $this->client = $client;
+        $this->api_token = $api_token;
     }
 
     /**
@@ -23,6 +23,7 @@ class Geocoding
      * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
      * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     * @throws \Throwable
      */
     public function getGeolocationFromAddress(string $address): array
     {
@@ -32,7 +33,7 @@ class Geocoding
                 'http://api.positionstack.com/v1/forward',
                 [
                     'query' => [
-                        'access_key' => self::API_TOKEN,
+                        'access_key' => $this->api_token,
                         'query' => $address,
                         'output' => 'json',
                         'limit' => 1
@@ -47,8 +48,8 @@ class Geocoding
             var_dump($address);;
             if (isset($response)) {
                 var_dump($response->getContent());
-                die;
             }
+            throw $e;
         }
 
 
