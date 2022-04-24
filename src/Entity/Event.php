@@ -4,68 +4,102 @@ namespace App\Entity;
 
 use App\Repository\EventRepository;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Core\Annotation\ApiResource;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: EventRepository::class)]
+#[ApiResource(
+    collectionOperations: ['get' => ['normalization_context' => ['groups' => 'event:list']]],
+    itemOperations: ['get' => ['normalization_context' => ['groups' => 'event:item']]],
+    order: ['id' => 'ASC'],
+    paginationEnabled: false
+)]
 class Event
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    #[Groups(['event:list', 'event:item'])]
     private $id;
 
     #[ORM\Column(type: 'string', length: 255)]
+    #[Groups(['event:list', 'event:item'])]
     private $name;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['event:list', 'event:item'])]
     private $status;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['event:list', 'event:item'])]
     private $organizer;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['event:list', 'event:item'])]
     private $test_name;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['event:list', 'event:item'])]
     private $test_type;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['event:list', 'event:item'])]
     private $regional_committee;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['event:list', 'event:item'])]
     private $discipline;
 
     #[ORM\Column(type: 'integer', nullable: true)]
     private $distances;
 
     #[ORM\Column(type: 'date')]
+    #[Groups(['event:list', 'event:item'])]
     private $date_from;
 
     #[ORM\Column(type: 'date')]
+    #[Groups(['event:list', 'event:item'])]
     private $date_to;
 
     #[ORM\Column(type: 'string', length: 255)]
+    #[Groups(['event:list', 'event:item'])]
     private $city;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['event:list', 'event:item'])]
     private $description;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['event:list', 'event:item'])]
     private $address;
 
     #[ORM\Column(type: 'float')]
+    #[Groups(['event:list', 'event:item'])]
     private $latitude;
 
     #[ORM\Column(type: 'float')]
+    #[Groups(['event:list', 'event:item'])]
     private $longitude;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['event:list', 'event:item'])]
     private $phone_number;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['event:list', 'event:item'])]
     private $mail;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['event:list', 'event:item'])]
     private $website;
+
+    #[ORM\Column(type: 'datetime_immutable')]
+    private $created_at;
+
+    public function __construct()
+    {
+        $this->setCreatedAt(new \DateTimeImmutable());
+    }
 
     public function getId(): ?int
     {
@@ -86,7 +120,7 @@ class Event
 
     public function getStatus(): ?string
     {
-        return $this->status;
+        return $this->status !== '' ? $this->status : null;
     }
 
     public function setStatus(?string $status): self
@@ -98,7 +132,7 @@ class Event
 
     public function getOrganizer(): ?string
     {
-        return $this->organizer;
+        return $this->organizer !== '' ? $this->organizer : null;
     }
 
     public function setOrganizer(?string $organizer): self
@@ -110,7 +144,7 @@ class Event
 
     public function getTestName(): ?string
     {
-        return $this->test_name;
+        return $this->test_name !== '' ? $this->test_name : null;
     }
 
     public function setTestName(?string $test_name): self
@@ -122,7 +156,7 @@ class Event
 
     public function getTestType(): ?string
     {
-        return $this->test_type;
+        return $this->test_type !== '' ? $this->test_type : null;
     }
 
     public function setTestType(?string $test_type): self
@@ -134,7 +168,7 @@ class Event
 
     public function getRegionalCommittee(): ?string
     {
-        return $this->regional_committee;
+        return $this->regional_committee !== '' ? $this->regional_committee : null;
     }
 
     public function setRegionalCommittee(?string $regional_committee): self
@@ -146,7 +180,7 @@ class Event
 
     public function getDiscipline(): ?string
     {
-        return $this->discipline;
+        return $this->discipline !== '' ? $this->discipline : null;
     }
 
     public function setDiscipline(?string $discipline): self
@@ -159,6 +193,33 @@ class Event
     public function getDistances(): ?int
     {
         return $this->distances;
+    }
+
+    #[Groups(['event:list', 'event:item'])]
+    public function getDistance(): ?array
+    {
+        $testDistance = [];
+
+        if ($this->distances & 1) {
+            $testDistance[] = 20;
+        }
+        if ($this->distances & 2) {
+            $testDistance[] = 30;
+        }
+        if ($this->distances & 4) {
+            $testDistance[] = 40;
+        }
+        if ($this->distances & 8) {
+            $testDistance[] = 50;
+        }
+        if ($this->distances & 16) {
+            $testDistance[] = 60;
+        }
+        if ($this->distances & 32) {
+            $testDistance[] = 70;
+        }
+
+        return $testDistance;
     }
 
     public function setDistances(?int $distances): self
@@ -206,7 +267,7 @@ class Event
 
     public function getDescription(): ?string
     {
-        return $this->description;
+        return $this->description !== '' ? $this->description : null;
     }
 
     public function setDescription(?string $description): self
@@ -254,7 +315,7 @@ class Event
 
     public function getPhoneNumber(): ?string
     {
-        return $this->phone_number;
+        return $this->phone_number !== '' ? $this->phone_number : null;
     }
 
     public function setPhoneNumber(?string $phone_number): self
@@ -278,7 +339,7 @@ class Event
 
     public function getWebsite(): ?string
     {
-        return $this->website;
+        return $this->website !== '' ? $this->website : null;
     }
 
     public function setWebsite(?string $website): self
@@ -286,5 +347,27 @@ class Event
         $this->website = $website;
 
         return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->created_at;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $created_at): self
+    {
+        $this->created_at = $created_at;
+
+        return $this;
+    }
+
+    /**
+     * @ORM\PrePersist
+     */
+    public function onPrePersist()
+    {
+        if ($this->getCreatedAt() === null) {
+            $this->setCreatedAt(new \DateTimeImmutable());
+        }
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Entity\Event;
+use App\Repository\EventRepository;
 use App\Service\Geocoding;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -10,6 +11,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Goutte\Client;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DomCrawler\Crawler;
@@ -75,7 +77,9 @@ class ScrapFftaEventsCommand extends Command
 
     protected function configure(): void
     {
-        $this->addArgument('base-url', InputArgument::OPTIONAL, 'base url of ffta website');
+        $this
+            ->addOption('clear', 'c', InputOption::VALUE_NONE, 'clear table')
+            ->addArgument('base-url', InputArgument::OPTIONAL, 'base url of ffta website');
     }
 
     /**
@@ -95,9 +99,13 @@ class ScrapFftaEventsCommand extends Command
         $baseUrl = $input->getArgument('base-url') ?? 'https://www.ffta.fr/evenements/liste';
         $entityManager = $this->doctrine->getManager();
 
-        $io->writeln('flushing event table...');
-        $this->flushEventTable();
-        $io->writeln('done..');
+        if ($input->getOption('clear')) {
+            $io->writeln('flushing event table...');
+            $this->flushEventTable();
+            $io->writeln('done..');
+
+            return Command::SUCCESS;
+        }
 
         $io->writeln('fetching events list page...');
 
@@ -171,11 +179,11 @@ class ScrapFftaEventsCommand extends Command
                 if (str_contains($locality, ' - ')) {
                     [$city, $country] = explode(' - ', $locality);
                     $country = $this->formatCountry($country);
-
                     $address .= ' ' . $city;
                     $address .= ', ' . $country;
                 } else {
                     $address .= ' ' . $locality;
+                    $address .= ', FRANCE';
                 }
 
                 $event->setAddress($address);
@@ -193,6 +201,8 @@ class ScrapFftaEventsCommand extends Command
             if (str_contains($locality, ' - ')) {
                 [$city, $country] = explode(' - ', $locality);
                 $locality = $city . ', ' . $this->formatCountry($country);
+            } else {
+                $locality .= ', FRANCE';
             }
             $event->setCity($locality);
 
@@ -250,24 +260,6 @@ class ScrapFftaEventsCommand extends Command
         return $total;
     }
 
-    private function flushEventTable(): void
-    {
-        $em = $this->doctrine->getManager();
-
-        $cmd = $em->getClassMetadata(Event::class);
-        $connection = $em->getConnection();
-        $connection->beginTransaction();
-
-        try {
-            $connection->query('SET FOREIGN_KEY_CHECKS=0');
-            $connection->query('DELETE FROM '.$cmd->getTableName());
-            $connection->query('SET FOREIGN_KEY_CHECKS=1');
-            $connection->commit();
-        } catch (\Exception $e) {
-            $connection->rollback();
-        };
-    }
-
     private function formatCountry(string $country): string
     {
         if (array_key_exists($country, self::COUNTRY_CONVERSION)) {
@@ -275,5 +267,12 @@ class ScrapFftaEventsCommand extends Command
         }
 
         return $country;
+    }
+
+    private function flushEventTable()
+    {
+        /** @var EventRepository $repository */
+        $repository = $this->doctrine->getRepository(Event::class);
+        $repository->removeAll();
     }
 }

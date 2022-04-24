@@ -47,6 +47,18 @@ class EventRepository extends ServiceEntityRepository
         }
     }
 
+    public function removeAll(bool $flush = true): void
+    {
+        $connection = $this->getEntityManager()->getConnection();
+        $platform   = $connection->getDatabasePlatform();
+
+        $connection->executeUpdate($platform->getTruncateTableSQL('event', true));
+
+        if ($flush) {
+            $this->_em->flush();
+        }
+    }
+
     // /**
     //  * @return Event[] Returns an array of Event objects
     //  */
